@@ -33,11 +33,21 @@ async function run() {
         app.post("/foods", async (req, res) => {
             try {
                 const foodItem = req.body;
-                const result = await foodsCollection.insertOne(foodItem);
-                res.status(201).send(result);
+                // Add timestamp for sorting
+                const foodAdd = {
+                    ...foodItem,
+                    createdAt: new Date()
+                };
+                const result = await foodsCollection.insertOne(foodAdd);
+                res.status(201).send({
+                    success: true,
+                    insertedId: result.insertedId,
+                    message: "Food item added successfully"
+                });
             } catch (error) {
                 console.error("Error adding food item:", error);
                 res.status(500).send({
+                    success: false,
                     message: "Failed to add food item",
                 });
             }
@@ -46,10 +56,14 @@ async function run() {
         // GET API
         app.get("/foods", async (req, res) => {
             try {
-                const foods = await foodsCollection.find({}).toArray();
-                res.status(200).send(result);
+                const foods = await foodsCollection.find({}).sort({ createdAt: -1 }).toArray();
+                res.status(200).send({
+                    success: true,
+                    data: foods
+                });
             } catch (error) {
                 res.status(500).send({
+                    success: false,
                     message: "Failed to fetch food items",
                 });
             }
