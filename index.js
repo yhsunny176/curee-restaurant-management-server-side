@@ -1,26 +1,13 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const admin = require("firebase-admin");
-
 const app = express();
 const port = process.env.PORT || 5000;
-
+const decoded = Buffer.from(process.env.FB_SK, "base64").toString("utf-8");
 // Initialize Firebase Admin SDK with environment variables
-const serviceAccount = {
-    type: "service_account",
-    project_id: process.env.FIREBASE_PROJECT_ID,
-    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-    private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    client_id: process.env.FIREBASE_CLIENT_ID,
-    auth_uri: "https://accounts.google.com/o/oauth2/auth",
-    token_uri: "https://oauth2.googleapis.com/token",
-    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-    client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
-    universe_domain: "googleapis.com",
-};
+const serviceAccount = JSON.parse(decoded);
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -49,7 +36,7 @@ const verifyFbToken = async (req, res, next) => {
     }
 };
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.567kdcn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const uri = process.env.MONGODB_URI
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {

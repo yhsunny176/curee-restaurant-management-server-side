@@ -7,3 +7,4 @@ dist/
 build/
 
 fb-admin-service-key.json
+.vercel
