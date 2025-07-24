@@ -245,7 +245,6 @@ async function run() {
             }
         });
 
-
         // GET api to fetch orders by email
         app.get("/my-orders/:email", verifyFbToken, async (req, res) => {
             try {
@@ -256,7 +255,7 @@ async function run() {
                 if (email !== req.user.email) {
                     return res.status(403).send({ success: false, message: "Forbidden access" });
                 }
-                const query = { "buyerEmail": email };
+                const query = { buyerEmail: email };
                 const orders = await orderCollection.find(query).toArray();
                 return res.status(200).send({
                     success: true,
@@ -268,6 +267,36 @@ async function run() {
                     success: false,
                     message: "Failed to fetch food orders!",
                 });
+            }
+        });
+
+        // DELETE api to delete an order by id
+        app.delete("/orders/:id", verifyFbToken, async (req, res) => {
+            const orderId = req.params.id;
+            if (!ObjectId.isValid(orderId)) {
+                return res.status(400).send({ success: false, message: "Invalid order id" });
+            }
+            try {
+                const filter = { _id: new ObjectId(orderId) };
+                const order = await orderCollection.findOne(filter);
+                if (!order) {
+                    return res.status(404).send({ success: false, message: "Order not found" });
+                }
+                // Only allow the buyer to delete own order
+                if (order.buyerEmail !== req.user.email) {
+                    return res
+                        .status(403)
+                        .send({ success: false, message: "Forbidden: You can only delete your own order" });
+                }
+                const result = await orderCollection.deleteOne(filter);
+                if (result.deletedCount === 1) {
+                    return res.status(200).send({ success: true, message: "Order deleted successfully" });
+                } else {
+                    return res.status(500).send({ success: false, message: "Failed to delete order" });
+                }
+            } catch (error) {
+                console.error("Error deleting order:", error);
+                return res.status(500).send({ success: false, message: "Failed to delete order" });
             }
         });
     } catch (error) {
