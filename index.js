@@ -218,7 +218,36 @@ async function run() {
             }
         });
 
+        // PATCH API to update all food information for a food item
+        app.patch("/my-food-update/:id", verifyFbToken, async (req, res) => {
+            const foodId = req.params.id;
+            const updateData = req.body;
+            if (!ObjectId.isValid(foodId)) {
+                return res.status(400).send({ success: false, message: "Invalid food id" });
+            }
+            try {
+                const filter = { _id: new ObjectId(foodId) };
+                if (updateData._id) {
+                    delete updateData._id;
+                }
+                const updateDoc = { $set: updateData };
+                const result = await foodsCollection.updateOne(filter, updateDoc);
+                if (result.matchedCount === 0) {
+                    return res.status(404).send({ success: false, message: "Food Item not found" });
+                }
+                if (result.modifiedCount === 0) {
+                    return res.status(200).send({ success: true, message: "No changes made to the food item" });
+                }
+                return res.status(200).send({ success: true, message: "Food item updated successfully" });
+            } catch (error) {
+                console.error("Error updating food item:", error);
+                return res.status(500).send({ success: false, message: "Failed to update food item" });
+            }
+        });
+
         
+
+
     } catch (error) {
         console.error("MongoDB connection error:", error);
     }
