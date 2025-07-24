@@ -245,9 +245,31 @@ async function run() {
             }
         });
 
-        
 
-
+        // GET api to fetch orders by email
+        app.get("/my-orders/:email", verifyFbToken, async (req, res) => {
+            try {
+                const email = req.params.email;
+                if (!email) {
+                    return res.status(400).send({ success: false, message: "Email parameter is required" });
+                }
+                if (email !== req.user.email) {
+                    return res.status(403).send({ success: false, message: "Forbidden access" });
+                }
+                const query = { "buyerEmail": email };
+                const orders = await orderCollection.find(query).toArray();
+                return res.status(200).send({
+                    success: true,
+                    data: orders,
+                });
+            } catch (error) {
+                console.error("Error fetching orders! ", error);
+                return res.status(500).send({
+                    success: false,
+                    message: "Failed to fetch food orders!",
+                });
+            }
+        });
     } catch (error) {
         console.error("MongoDB connection error:", error);
     }
