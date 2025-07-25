@@ -3,17 +3,16 @@ const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const admin = require("firebase-admin");
-const app = express();
 const port = process.env.PORT || 5000;
+const app = express();
+
 const decoded = Buffer.from(process.env.FB_SK, "base64").toString("utf-8");
 // Initialize Firebase Admin SDK with environment variables
 const serviceAccount = JSON.parse(decoded);
 // Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-    });
-}
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+});
 
 // Middleware
 const corsOptions = {
@@ -45,7 +44,7 @@ const verifyFbToken = async (req, res, next) => {
     }
 };
 
-const uri = process.env.MONGODB_URI;
+const uri = `${process.env.MONGODB_URI}`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -58,8 +57,8 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        await client.connect();
-        console.log("Connected to MongoDB!");
+        // await client.connect();
+        // console.log("Connected to MongoDB!");
 
         const database = client.db("foodSharingDB");
         const foodsCollection = database.collection("foods");
@@ -299,8 +298,8 @@ async function run() {
                 return res.status(500).send({ success: false, message: "Failed to delete order" });
             }
         });
-    } catch (error) {
-        console.error("MongoDB connection error:", error);
+    } finally {
+        // Ensures that the client will close when you finish/error
     }
 }
 run();

@@ -6,5 +6,6 @@ node_modules
 dist/
 build/
 
+serviceKeyConverter.js
 fb-admin-service-key.json
 .vercel
