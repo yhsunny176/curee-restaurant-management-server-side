@@ -67,18 +67,16 @@ async function run() {
 
         // POST API for Contact Form Email
         app.post("/send-contact-email", async (req, res) => {
-            try {
-                const { userEmail, message } = req.body;
+        try {
+            const { userEmail, phoneNumber, message } = req.body;
 
-                // Validate input
-                if (!userEmail || !message) {
-                    return res.status(400).send({
-                        success: false,
-                        message: "Email and message are required",
-                    });
-                }
-
-                // Create transporter for email sending
+            // Validate input
+            if (!userEmail || !message) {
+                return res.status(400).send({
+                    success: false,
+                    message: "Email and message are required",
+                });
+            }                // Create transporter for email sending
                 const transporter = nodemailer.createTransport({
                     service: "gmail",
                     auth: {
@@ -92,7 +90,7 @@ async function run() {
                     to: process.env.AGENT_EMAIL || "",
                     replyTo: userEmail, // Customer email for replies
                     subject: `🍽️ New Contact: ${userEmail}`,
-                    text: `New contact form submission from: ${userEmail}\n\nMessage:\n${message}`,
+                    text: `New contact form submission from: ${userEmail}${phoneNumber ? `\nPhone: ${phoneNumber}` : ''}\n\nMessage:\n${message}`,
                     html: `
                         <!DOCTYPE html>
                         <html lang="en">
@@ -128,10 +126,14 @@ async function run() {
                                             👤 Customer Information
                                         </h3>
                                         <div style="background-color: #ffffff; padding: 15px; border-left: 3px solid #4caf50;">
-                                            <p style="margin: 0; color: #666666; font-size: 14px;">
+                                            <p style="margin: 0 0 10px 0; color: #666666; font-size: 14px;">
                                                 <strong style="color: #333333;">Email:</strong> 
                                                 <a href="mailto:${userEmail}" style="color: #d32f2f; text-decoration: none; font-weight: 500;">${userEmail}</a>
                                             </p>
+                                            ${phoneNumber ? `<p style="margin: 0; color: #666666; font-size: 14px;">
+                                                <strong style="color: #333333;">Phone:</strong> 
+                                                <a href="tel:${phoneNumber}" style="color: #d32f2f; text-decoration: none; font-weight: 500;">${phoneNumber}</a>
+                                            </p>` : ''}
                                         </div>
                                     </div>
                                     
@@ -151,10 +153,13 @@ async function run() {
                                            style="display: inline-block; background-color: #d32f2f; color: #ffffff; padding: 12px 30px; text-decoration: none; margin: 0 10px; font-weight: 600;">
                                             📧 Reply to Customer
                                         </a>
-                                        <a href="tel:+999764886" 
+                                        ${phoneNumber ? `<a href="tel:${phoneNumber}" 
                                            style="display: inline-block; background-color: #4caf50; color: #ffffff; padding: 12px 30px; text-decoration: none; margin: 0 10px; font-weight: 600;">
                                             📞 Call Customer
-                                        </a>
+                                        </a>` : `<a href="tel:+999764886" 
+                                           style="display: inline-block; background-color: #4caf50; color: #ffffff; padding: 12px 30px; text-decoration: none; margin: 0 10px; font-weight: 600;">
+                                            📞 Call Restaurant
+                                        </a>`}
                                     </div>
                                 </div>
                                 
