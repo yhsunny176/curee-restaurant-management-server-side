@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const admin = require("firebase-admin");
+const nodemailer = require("nodemailer");
 const port = process.env.PORT || 5000;
 const app = express();
 
@@ -63,6 +64,143 @@ async function run() {
         const database = client.db("foodSharingDB");
         const foodsCollection = database.collection("foods");
         const orderCollection = database.collection("orders");
+
+        // POST API for Contact Form Email
+        app.post("/send-contact-email", async (req, res) => {
+            try {
+                const { userEmail, message } = req.body;
+
+                // Validate input
+                if (!userEmail || !message) {
+                    return res.status(400).send({
+                        success: false,
+                        message: "Email and message are required",
+                    });
+                }
+
+                // Create transporter for email sending
+                const transporter = nodemailer.createTransport({
+                    service: "gmail",
+                    auth: {
+                        user: process.env.EMAIL_USER,
+                        pass: process.env.EMAIL_PASS,
+                    },
+                });
+
+                const mailOptions = {
+                    from: `"CUREE Contact Form" <${process.env.EMAIL_USER}>`,
+                    to: process.env.AGENT_EMAIL || "",
+                    replyTo: userEmail, // Customer email for replies
+                    subject: `🍽️ New Contact: ${userEmail}`,
+                    text: `New contact form submission from: ${userEmail}\n\nMessage:\n${message}`,
+                    html: `
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>New Contact Form Submission</title>
+                        </head>
+                        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8f9fa;">
+                            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                                <!-- Header -->
+                                <div style="background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); padding: 30px; text-align: center;">
+                                    <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">
+                                        🍽️ CUREE Restaurant
+                                    </h1>
+                                    <p style="color: #ffeb3b; margin: 5px 0 0 0; font-size: 14px;">
+                                        New Customer Inquiry
+                                    </p>
+                                </div>
+                                
+                                <!-- Content -->
+                                <div style="padding: 30px;">
+                                    <!-- Alert Banner -->
+                                    <div style="background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin-bottom: 20px;">
+                                        <h2 style="color: #1565c0; margin: 0; font-size: 18px;">
+                                            📧 New Contact Form Submission
+                                        </h2>
+                                    </div>
+                                    
+                                    <!-- Customer Information -->
+                                    <div style="background-color: #f5f5f5; padding: 20px; margin-bottom: 20px;">
+                                        <h3 style="color: #333333; margin: 0 0 15px 0; font-size: 16px;">
+                                            👤 Customer Information
+                                        </h3>
+                                        <div style="background-color: #ffffff; padding: 15px; border-left: 3px solid #4caf50;">
+                                            <p style="margin: 0; color: #666666; font-size: 14px;">
+                                                <strong style="color: #333333;">Email:</strong> 
+                                                <a href="mailto:${userEmail}" style="color: #d32f2f; text-decoration: none; font-weight: 500;">${userEmail}</a>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Message Content -->
+                                    <div style="margin-bottom: 20px;">
+                                        <h3 style="color: #333333; margin: 0 0 15px 0; font-size: 16px;">
+                                            💬 Message Content
+                                        </h3>
+                                        <div style="background-color: #ffffff; border: 1px solid #e0e0e0; padding: 20px;">
+                                            <p style="color: #444444; line-height: 1.6; font-size: 15px; margin: 0;">${message}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Action Buttons -->
+                                    <div style="text-align: center; margin: 30px 0;">
+                                        <a href="mailto:${userEmail}?subject=Re: Your inquiry to CUREE Restaurant" 
+                                           style="display: inline-block; background-color: #d32f2f; color: #ffffff; padding: 12px 30px; text-decoration: none; margin: 0 10px; font-weight: 600;">
+                                            📧 Reply to Customer
+                                        </a>
+                                        <a href="tel:+999764886" 
+                                           style="display: inline-block; background-color: #4caf50; color: #ffffff; padding: 12px 30px; text-decoration: none; margin: 0 10px; font-weight: 600;">
+                                            📞 Call Customer
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <!-- Footer -->
+                                <div style="background-color: #37474f; color: #ffffff; padding: 20px; text-align: center;">
+                                    <p style="margin: 0 0 10px 0; font-size: 14px;">
+                                        <strong>CUREE Restaurant Management System</strong>
+                                    </p>
+                                    <p style="margin: 0; font-size: 12px;">
+                                        📍 39/5 Zigatola (ground Floor), Dhanmondi, 1209, Dhaka<br>
+                                        📞 +999 764 886 | +999 423 097
+                                    </p>
+                                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #546e7a;">
+                                        <p style="margin: 0; font-size: 11px;">
+                                            This email was automatically generated from the CUREE website contact form.<br>
+                                            Received on: ${new Date().toLocaleString("en-US", {
+                                                weekday: "long",
+                                                year: "numeric",
+                                                month: "long",
+                                                day: "numeric",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                    `,
+                };
+
+                await transporter.sendMail(mailOptions);
+
+                res.status(200).send({
+                    success: true,
+                    message: "Email sent successfully",
+                });
+            } catch (error) {
+                console.error("Email sending failed:", error);
+                res.status(500).send({
+                    success: false,
+                    message: "Failed to send email",
+                });
+            }
+        });
 
         // POST API All Foods
         app.post("/foods", verifyFbToken, async (req, res) => {
